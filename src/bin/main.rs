@@ -1,7 +1,7 @@
 #![recursion_limit = "64"]
 
 use std::env;
-mod days;
+use aoc20::days;
 
 fn main() {
     println!("Advent of Code 2020");

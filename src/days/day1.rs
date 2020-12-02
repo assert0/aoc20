@@ -23,7 +23,7 @@ pub fn day1(args: &[String]) -> i32 {
     0
 }
 
-fn find1(entries: &Vec<i32>, sum: i32) -> Option<i32> {
+pub fn find1(entries: &Vec<i32>, sum: i32) -> Option<i32> {
     let mut r = None;
     for i in 0..entries.len()-1 {
         for j in i+1..entries.len() {
@@ -35,10 +35,10 @@ fn find1(entries: &Vec<i32>, sum: i32) -> Option<i32> {
     r
 }
 
-fn find2(entries: &Vec<i32>, sum: i32) -> Option<i32> {
+pub fn find2(entries: &Vec<i32>, sum: i32) -> Option<i32> {
     let mut r = None;
-    for i in 0..entries.len()-1 {
-        for j in i+1..entries.len() {
+    for i in 0..entries.len()-2 {
+        for j in i+1..entries.len()-1 {
             for k in j+1..entries.len() {
                 if entries[i] + entries[j] + entries[k] == sum {
                     r = Some(entries[i] * entries[j] * entries[k]);
@@ -49,7 +49,7 @@ fn find2(entries: &Vec<i32>, sum: i32) -> Option<i32> {
     r
 }
 
-fn find(entries: &Vec<i32>, sum: i32, count: usize) -> Option<i32> {
+pub fn find(entries: &Vec<i32>, sum: i32, count: usize) -> Option<i32> {
     let mut r = None;
     entries.iter().cloned().combinations(count).for_each(|c| {
         if c.iter().sum::<i32>() == sum {
