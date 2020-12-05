@@ -19,10 +19,10 @@ impl Policy {
         }
         // Split out the policy & password line (ex: "1-3 a: abcde")
         let caps = RE.captures(policypassword).unwrap();
-        let first = caps.get(1).map_or(0, |m| m.as_str().parse::<usize>().unwrap());
-        let second = caps.get(2).map_or(0, |m| m.as_str().parse::<usize>().unwrap());
-        let letter = caps.get(3).map_or('?', |m| m.as_str().chars().next().unwrap());
-        let password = caps.get(4).map_or("", |m| m.as_str());
+        let first = caps.get(1).unwrap().as_str().parse::<usize>().unwrap();
+        let second = caps.get(2).unwrap().as_str().parse::<usize>().unwrap();
+        let letter = caps.get(3).unwrap().as_str().chars().next().unwrap();
+        let password = caps.get(4).unwrap().as_str();
 
         let policy = Policy::new((first, second), letter);
         (policy, password.to_string())

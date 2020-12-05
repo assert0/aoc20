@@ -8,20 +8,20 @@ fn passwords() -> Vec<(Policy, String)> {
 }
 
 #[test]
-fn parse() {
+fn day2_parse() {
     let (p, pwd) = Policy::parse("1-3 a: abcde");
     assert_eq!(p, Policy::new((1, 3), 'a'));
     assert_eq!(pwd, String::from("abcde"));
 }
 
 #[test]
-fn part1() {
+fn day2_part1() {
     let result: Vec<bool> = passwords().iter().map(|(p, pwd)| p.is_valid_part1(pwd)).collect();
     assert_eq!(result, vec![true, false, true]);
 }
 
 #[test]
-fn part2() {
+fn day2_part2() {
     let result: Vec<bool> = passwords().iter().map(|(p, pwd)| p.is_valid_part2(pwd)).collect();
     assert_eq!(result, vec![true, false, false]);
 }
