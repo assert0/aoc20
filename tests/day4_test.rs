@@ -1,10 +1,9 @@
-use std::fs;
 use aoc20::days::day4;
 
 #[test]
-fn day4_get_passwords() {
-    let passwords = day4::get_passports_lines(&String::from("data/day4example.txt"));
-    assert_eq!(passwords.len(), 4);
+fn day4_get_passports() {
+    let passports = day4::get_passport_lines(&String::from("data/day4example.txt"));
+    assert_eq!(passports.len(), 4);
 }
 
 #[test]

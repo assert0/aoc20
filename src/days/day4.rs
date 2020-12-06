@@ -2,10 +2,10 @@ use std::fs;
 use regex::{Regex, Captures};
 use std::fmt;
 
-pub fn get_passports_lines(filename: &String) -> Vec<String> {
+pub fn get_passport_lines(filename: &String) -> Vec<String> {
     let contents = fs::read_to_string(filename)
         .expect("Something went wrong reading the file");
-    // normalize the input by replacing only the first occurance of a endline with a space
+    // normalize the input by replacing only the first occurance of an endline with a space
     let re = Regex::new(r"([^\n])\n").unwrap();
     re.replace_all(&contents, |caps: &Captures| {
             format!("{} ", &caps[1])
@@ -90,8 +90,8 @@ impl KeyValue {
         match value.parse::<usize>() {
             Ok(n) => {
                 match units {
-                    "cm" => n >= 150 && n <= 193,
-                    "in" => n >= 59 && n <= 76,
+                    "cm" => (n >= 150 && n <= 193),
+                    "in" => (n >= 59 && n <= 76),
                     _ => false,
                 }
             },
@@ -169,7 +169,7 @@ pub fn day4(args: &[String]) -> i32 {
     let filename = &args[0];
     println!("In file {}", filename);
     
-    let lines = get_passports_lines(filename);
+    let lines = get_passport_lines(filename);
     let count = lines.iter()
                     .filter(|p| Passport::parse(&p).north_pole_keys_present())
                     .count();
