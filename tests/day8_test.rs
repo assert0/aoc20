@@ -1,4 +1,3 @@
-use std::fs;
 use aoc20::days::day8;
 
 #[test]
