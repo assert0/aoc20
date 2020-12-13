@@ -1,7 +1,8 @@
-use std::cmp::max;
 use std::fs;
 use std::fmt;
 use itertools::iproduct;
+
+pub const MAX_MAGNITUDE: isize = 1_000;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum State {
@@ -68,22 +69,37 @@ impl SeatLayout {
 
     pub fn get(&self, y: isize, x: isize) -> Option<State> {
         if self.is_valid_position(y, x) {
-            //println!("{} {} {}", y, x, self.map[y as usize][x as usize]);
             return Some(self.map[y as usize][x as usize]);
         }
         None
     }
 
-    pub fn adjacent(&self, y: usize, x: usize, ring: isize) -> Vec<Option<State>> {
+    pub fn is_occupied(&self, position: (isize, isize), vector: (isize, isize), max_magnitude: isize) -> bool {
+        for m in 1..max_magnitude+1 {
+            match self.get(position.0 + vector.0 * m, position.1 + vector.1 * m) {
+                Some(s) => match s {
+                    State::Occupied => return true,
+                    State::Open => break,
+                    State::Floor => continue,
+                },
+                None => break,
+            };
+        }
+        false
+    }
+
+    pub fn adjacent_occupied_count(&self, y: usize, x: usize, max_magnitude: isize) -> usize {
         lazy_static! {
-            static ref ADJ: Vec<(isize, isize)> = vec![
+            static ref VECTORS: Vec<(isize, isize)> = vec![
                 (0, 1), (0, -1), (1, 0), (-1, 0),
                 (1, 1), (1, -1), (-1, 1), (-1, -1)
             ];
         }
         assert!(self.is_valid_position(y as isize, x as isize));
-        ADJ.iter().map(|&(dy, dx)| self.get(y as isize + dy * ring, x as isize + dx * ring))
-                  .collect()
+        VECTORS.iter()
+               .map(|&vector| self.is_occupied((y as isize, x as isize), vector, max_magnitude))
+               .filter(|&b| b)   
+               .count()
     }
 
     pub fn state_count(positions: &Vec<Option<State>>, state: State) -> usize {
@@ -93,9 +109,7 @@ impl SeatLayout {
 
     // determine seat's next state
     pub fn next_state_part1(&self, y: usize, x: usize) -> State {
-        let count = self.adjacent(y, x, 1).into_iter()
-                        .filter(|&s| s == Some(State::Occupied))
-                        .count();
+        let count = self.adjacent_occupied_count(y, x, 1);
         match self.map[y][x] {
             State::Open => {
                 if count == 0 {
@@ -117,43 +131,9 @@ impl SeatLayout {
         }
     }
 
-    // iterate outward finding which seats are occupied
-    pub fn occupied_count_part2(&self, y: usize, x: usize) -> usize {
-        let mut occupied = vec![State::Floor; 8];
-        for r in 1..max(self.height(), self.width()) {
-            let o = self.adjacent(y, x, r as isize);
-            if o.iter().all(|&s| s == None) {
-                break;
-            }
-            //println!("{} {} {} {:?}", y, x, r, o);
-            occupied.iter_mut()
-                    .zip(o).for_each(|(a, b)| *a = match a {
-                        State::Floor => b.unwrap_or(State::Floor),
-                        _ => *a,
-                    });
-
-            //println!("{:?}", occupied);
-        }
-        occupied.into_iter().filter(|&b| b == State::Occupied).count()
-    }
-
     // determine seat's next state
     pub fn next_state_part2(&self, y: usize, x: usize) -> State {
-        // let mut count = 0;
-        // let mut occupied = vec![false; 8];
-        
-        // // iterate outward finding which seats are occupied
-        // for r in 1..max(self.height(), self.width()) {
-        //     let o = self.adjacent(y, x, r as isize);
-        //     if o.iter().all(|&s| s == None) {
-        //         break;
-        //     }
-        //     println!("{} {} {} {:?}", y, x, r, o);
-        //     occupied.iter_mut()
-        //             .zip(o).for_each(|(a, b)| *a |= b == Some(State::Occupied));
-           
-        // }
-        let count = self.occupied_count_part2(y, x);
+        let count = self.adjacent_occupied_count(y, x, MAX_MAGNITUDE);
         match self.map[y][x] {
             State::Open => {
                 if count == 0 {
