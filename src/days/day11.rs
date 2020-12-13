@@ -2,13 +2,17 @@ use std::fs;
 use std::fmt;
 use itertools::iproduct;
 
-pub const MAX_MAGNITUDE: isize = 1_000;
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum State {
     Open,
     Occupied,
     Floor,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Part {
+    Part1,
+    Part2,
 }
 
 impl State {
@@ -35,16 +39,22 @@ impl fmt::Display for State {
 
 #[derive(Debug, Clone)]
 pub struct SeatLayout {
-    map: Vec<Vec<State>>
+    map: Vec<Vec<State>>,
+    max_magnitude: isize,
+    min_occupied_count: usize,
 }
 
 impl SeatLayout {
 
-    pub fn new(input: &String) -> SeatLayout {
+    pub fn new(input: &String, part: Part) -> SeatLayout {
         let map: Vec<Vec<State>> = input.lines()
                     .map(|l| l.chars().map(|c| State::parse(c)).collect())
                     .collect();
-        SeatLayout { map }
+        let (max_magnitude, min_occupied_count) = match part {
+            Part::Part1 => (1, 4),
+            Part::Part2 => (10_000, 5),
+        };
+        SeatLayout { map, max_magnitude, min_occupied_count }
     }
 
     pub fn width(&self) -> usize {
@@ -74,8 +84,8 @@ impl SeatLayout {
         None
     }
 
-    pub fn is_occupied(&self, position: (isize, isize), vector: (isize, isize), max_magnitude: isize) -> bool {
-        for m in 1..max_magnitude+1 {
+    pub fn is_occupied(&self, position: (isize, isize), vector: (isize, isize)) -> bool {
+        for m in 1..self.max_magnitude+1 {
             match self.get(position.0 + vector.0 * m, position.1 + vector.1 * m) {
                 Some(s) => match s {
                     State::Occupied => return true,
@@ -88,7 +98,7 @@ impl SeatLayout {
         false
     }
 
-    pub fn adjacent_occupied_count(&self, y: usize, x: usize, max_magnitude: isize) -> usize {
+    pub fn adjacent_occupied_count(&self, y: usize, x: usize) -> usize {
         lazy_static! {
             static ref VECTORS: Vec<(isize, isize)> = vec![
                 (0, 1), (0, -1), (1, 0), (-1, 0),
@@ -97,7 +107,7 @@ impl SeatLayout {
         }
         assert!(self.is_valid_position(y as isize, x as isize));
         VECTORS.iter()
-               .map(|&vector| self.is_occupied((y as isize, x as isize), vector, max_magnitude))
+               .map(|&vector| self.is_occupied((y as isize, x as isize), vector))
                .filter(|&b| b)   
                .count()
     }
@@ -108,8 +118,8 @@ impl SeatLayout {
     }
 
     // determine seat's next state
-    pub fn next_state_part1(&self, y: usize, x: usize) -> State {
-        let count = self.adjacent_occupied_count(y, x, 1);
+    pub fn next_state(&self, y: usize, x: usize) -> State {
+        let count = self.adjacent_occupied_count(y, x);
         match self.map[y][x] {
             State::Open => {
                 if count == 0 {
@@ -119,7 +129,7 @@ impl SeatLayout {
                 }
             },
             State::Occupied => {
-                if count >= 4 {
+                if count >= self.min_occupied_count {
                     State::Open
                 } else {
                     State::Occupied
@@ -131,46 +141,10 @@ impl SeatLayout {
         }
     }
 
-    // determine seat's next state
-    pub fn next_state_part2(&self, y: usize, x: usize) -> State {
-        let count = self.adjacent_occupied_count(y, x, MAX_MAGNITUDE);
-        match self.map[y][x] {
-            State::Open => {
-                if count == 0 {
-                    State::Occupied
-                } else {
-                    State::Open
-                }
-            },
-            State::Occupied => {
-                if count >= 5 {
-                    State::Open
-                } else {
-                    State::Occupied
-                }
-            },
-            State::Floor => {
-                State::Floor
-            },
-        }
-    }
-
-    pub fn run_round_part1(&mut self) -> usize {
+    pub fn run_round(&mut self) -> usize {
         let mut next = self.map.clone();
         iproduct!(0..self.height(), 0..self.width())
-            .for_each(|(y, x)| next[y][x] = self.next_state_part1(y, x));
-        let changed_count = iproduct!(0..self.height(), 0..self.width())
-                    .map(|(y, x)| self.map[y][x] != next[y][x])
-                    .filter(|&b| b)
-                    .count();
-        self.map = next;
-        changed_count
-    }
-
-    pub fn run_round_part2(&mut self) -> usize {
-        let mut next = self.map.clone();
-        iproduct!(0..self.height(), 0..self.width())
-            .for_each(|(y, x)| next[y][x] = self.next_state_part2(y, x));
+            .for_each(|(y, x)| next[y][x] = self.next_state(y, x));
         let changed_count = iproduct!(0..self.height(), 0..self.width())
                     .map(|(y, x)| self.map[y][x] != next[y][x])
                     .filter(|&b| b)
@@ -213,19 +187,19 @@ pub fn day11(args: &[String]) -> i32 {
     let contents = fs::read_to_string(filename)
         .expect("Something went wrong reading the file");
 
-    let mut layout = SeatLayout::new(&contents);
+    let mut layout = SeatLayout::new(&contents, Part::Part1);
     loop {
         //println!("{}", layout);
-        if layout.run_round_part1() == 0 {
+        if layout.run_round() == 0 {
             break;
         }
     }
     println!("Part 1: {}", layout.count(State::Occupied));
 
-    layout = SeatLayout::new(&contents);
+    layout = SeatLayout::new(&contents, Part::Part2);
     loop {
         //println!("{}", layout);
-        if layout.run_round_part2() == 0 {
+        if layout.run_round() == 0 {
             break;
         }
     }
