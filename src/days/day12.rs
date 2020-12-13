@@ -3,29 +3,31 @@ use regex::Regex;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Direction {
-    North,
-    East,
-    South,
-    West
+    North = 0,
+    East = 90,
+    South = 180,
+    West = 270,
 }
 
 impl Direction {
-    pub fn to_degrees(d: Direction) -> usize {
+    pub fn to_char(d: Direction) -> char {
         match d {
-            Direction::North => 0,
-            Direction::East => 90,
-            Direction::South => 180,
-            Direction::West => 270,
+            Direction::North => 'N',
+            Direction::East => 'E',
+            Direction::South => 'S',
+            Direction::West => 'W',
         }
     }
+}
 
-    pub fn from_degrees(deg: isize) -> Direction {
-        match deg % 360 {
+impl From<isize> for Direction {
+    fn from(item: isize) -> Self {
+        match item % 360 {
             0 => Direction::North,
             90 => Direction::East,
             180 => Direction::South,
             270 => Direction::West,
-            _ => panic!("Unknown degree: {}", deg)
+            _ => panic!("Unknown degree: {}", item)
         }
     }
 }
@@ -45,7 +47,7 @@ impl Ship {
     }
 
     pub fn turn(&mut self, degrees: isize) {
-        self.facing = Direction::from_degrees(Direction::to_degrees(self.facing) as isize + degrees);
+        self.facing = Direction::from(self.facing as isize + degrees);
     }
 
     pub fn turn_waypoint(&mut self, degrees: usize) {
@@ -60,53 +62,34 @@ impl Ship {
     }
 
     pub fn step(&mut self, instr: &Instruction) {
-        let movement = match instr.action {
-            'F' => Some(self.facing),
-            'N' => Some(Direction::North),
-            'E' => Some(Direction::East),
-            'S' => Some(Direction::South),
-            'W' => Some(Direction::West),
-            _ => None
+        let action = match instr.action {
+            'F' => Direction::to_char(self.facing),
+            _ => instr.action,
         };
-        match movement {
-            Some(s) => match s {
-                Direction::North => self.position.1 += instr.value as isize,
-                Direction::South => self.position.1 -= instr.value as isize,
-                Direction::East => self.position.0 += instr.value as isize,
-                Direction::West => self.position.0 -= instr.value as isize,
-            }
-            None => match instr.action {
-                'L' => self.turn(360 - instr.value as isize),
-                'R' => self.turn(instr.value as isize),
-                _ => panic!("Invalid action {}", instr.action)
-            }
+        match action {
+            'N' => self.position.1 += instr.value as isize,
+            'S' => self.position.1 -= instr.value as isize,
+            'E' => self.position.0 += instr.value as isize,
+            'W' => self.position.0 -= instr.value as isize,
+            'L' => self.turn(360 - instr.value as isize),
+            'R' => self.turn(instr.value as isize),
+            _ => panic!("Invalid action {}", instr.action)
         }
     }
 
     pub fn step_waypoint(&mut self, instr: &Instruction) {
-        let move_waypoint = match instr.action {
-            'N' => Some(Direction::North),
-            'E' => Some(Direction::East),
-            'S' => Some(Direction::South),
-            'W' => Some(Direction::West),
-            _ => None
-        };
-        match move_waypoint {
-            Some(s) => match s {
-                Direction::North => self.waypoint.1 += instr.value as isize,
-                Direction::South => self.waypoint.1 -= instr.value as isize,
-                Direction::East => self.waypoint.0 += instr.value as isize,
-                Direction::West => self.waypoint.0 -= instr.value as isize,
-            }
-            None => match instr.action {
-                'F' => {
-                    self.position.0 += self.waypoint.1 * instr.value as isize;
-                    self.position.1 += self.waypoint.0 * instr.value as isize;
-                },
-                'L' => self.turn_waypoint(360 - instr.value),
-                'R' => self.turn_waypoint(instr.value),
-                _ => panic!("Invalid action {}", instr.action)
-            }
+        match instr.action {
+            'N' => self.waypoint.1 += instr.value as isize,
+            'S' => self.waypoint.1 -= instr.value as isize,
+            'E' => self.waypoint.0 += instr.value as isize,
+            'W' => self.waypoint.0 -= instr.value as isize,
+            'F' => {
+                self.position.1 += self.waypoint.1 * instr.value as isize;
+                self.position.0 += self.waypoint.0 * instr.value as isize;
+            },
+            'L' => self.turn_waypoint(360 - instr.value),
+            'R' => self.turn_waypoint(instr.value),
+            _ => panic!("Invalid action {}", instr.action),
         }
     }
 
