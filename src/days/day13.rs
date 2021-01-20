@@ -36,8 +36,8 @@ pub fn calc_part1(schedule: &Schedule) -> i64 {
 }
 
 // Part 2 requires the Chinese Remainder Theorem https://crypto.stanford.edu/pbc/notes/numbertheory/crt.html
-pub fn calc_part2(modulii: &Vec<i64>, length: i64) -> i64 {
-    let residues: Vec<i64> = (0..length).collect();
+pub fn calc_part2(modulii: &Vec<i64>) -> i64 {
+    let residues: Vec<i64> = (0..modulii.len() as i64).collect();
  
     let remainder = utils::chinese_remainder(&residues, &modulii).unwrap();
     modulii.iter().product::<i64>() - remainder
@@ -59,8 +59,7 @@ pub fn day13(args: &[String]) -> i32 {
 
     println!("Part 1: {:?}", calc_part1(&schedule));
 
-    let l = schedule.buses.len() as i64;
-    println!("Part 2: {:?}", calc_part2(&schedule.buses, l));
+    println!("Part 2: {:?}", calc_part2(&schedule.buses));
 
     0
 }
